@@ -1,0 +1,174 @@
+CREATE TABLE "Team" (
+    "name" VARCHAR(140) NOT NULL PRIMARY KEY,
+    "description" TEXT,
+    "escalation_team" VARCHAR(140),
+    "last_assigned_agent" UUID,
+
+    CONSTRAINT fk_team_last_agent
+        FOREIGN KEY ("last_assigned_agent") REFERENCES auth.users (id),
+    CONSTRAINT fk_team_escalation
+        FOREIGN KEY ("escalation_team") REFERENCES "Team" (name)
+);
+
+CREATE TABLE "Agent_Membership" (
+    "id" SERIAL PRIMARY KEY,
+    "user_id" UUID NOT NULL,
+    "team" VARCHAR(140) NOT NULL,
+
+    CONSTRAINT fk_membership_user
+        FOREIGN KEY ("user_id") REFERENCES auth.users (id),
+    CONSTRAINT fk_membership_team
+        FOREIGN KEY ("team") REFERENCES "Team" (name),
+    CONSTRAINT uq_user_team UNIQUE ("user_id", "team")
+);
+
+CREATE TABLE "Priority" (
+    "name" VARCHAR(140) NOT NULL PRIMARY KEY,
+    "description" TEXT,
+    "color_code" VARCHAR(7),
+    "sort_order" INTEGER
+);
+
+CREATE TABLE "SLA" (
+    "name" VARCHAR(140) NOT NULL PRIMARY KEY,
+    "priority_name" VARCHAR(140) NOT NULL,
+    "description" TEXT,
+    "first_response_time" INTERVAL,
+    "resolution_time" INTERVAL,
+    "applies_to_contract_group" VARCHAR(140),
+
+    CONSTRAINT fk_sla_priority
+        FOREIGN KEY ("priority_name") REFERENCES "Priority" (name)
+);
+
+CREATE TABLE "Role" (
+    user_id UUID NOT NULL PRIMARY KEY,
+    "name" VARCHAR(50) NOT NULL,
+
+    CONSTRAINT fk_user_roles_user
+        FOREIGN KEY (user_id) REFERENCES auth.users (id) ON DELETE CASCADE,
+    CONSTRAINT check_valid_role
+        CHECK ("name" IN ('System Manager', 'Agent', 'Customer'))
+);
+
+CREATE TABLE "Ticket" (
+    "name" VARCHAR(140) NOT NULL PRIMARY KEY,
+    "owner" VARCHAR(140) NOT NULL,
+    "creation" TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    "modified" TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    "subject" VARCHAR(140) NOT NULL,
+    "description" TEXT,
+    "raised_by" VARCHAR(140) NOT NULL,
+    "status" VARCHAR(140) DEFAULT 'Open',
+    "priority" VARCHAR(140),
+    "agent_group" VARCHAR(140),
+    "assigned_agent" UUID,
+    "channel" VARCHAR(140) DEFAULT 'Email',
+    "resolution_date" TIMESTAMP WITHOUT TIME ZONE,
+    "resolved_by_bot" BOOLEAN DEFAULT FALSE,
+    "resolved_by_agent" UUID,
+    "first_responded_on" TIMESTAMP WITHOUT TIME ZONE,
+    "customer" VARCHAR(140),
+    "sla_name" VARCHAR(140),
+    "agreement_status" VARCHAR(140),
+    "response_by" TIMESTAMP WITHOUT TIME ZONE,
+    "resolution_by" TIMESTAMP WITHOUT TIME ZONE,
+    "total_hold_time" INTERVAL,
+    "first_response_time" INTERVAL,
+    "is_merged" BOOLEAN DEFAULT FALSE,
+    "merged_with" VARCHAR(140),
+    "original_group" VARCHAR(140),
+    "escalation_count" INTEGER DEFAULT 0,
+
+    CONSTRAINT fk_ticket_assigned_agent FOREIGN KEY ("assigned_agent") REFERENCES auth.users (id),
+    CONSTRAINT fk_ticket_resolved_by_agent FOREIGN KEY ("resolved_by_agent") REFERENCES auth.users (id),
+    CONSTRAINT fk_ticket_agent_group FOREIGN KEY ("agent_group") REFERENCES "Team" (name),
+    CONSTRAINT fk_ticket_original_group FOREIGN KEY ("original_group") REFERENCES "Team" (name),
+    CONSTRAINT fk_ticket_priority FOREIGN KEY ("priority") REFERENCES "Priority" (name),
+    CONSTRAINT fk_ticket_sla_name FOREIGN KEY ("sla_name") REFERENCES "SLA" (name)
+);
+
+CREATE TABLE "Communication" (
+    "name" VARCHAR(140) NOT NULL PRIMARY KEY,
+    "ticket" VARCHAR(140) NOT NULL,
+    "creation" TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    "sender" UUID,
+    "raised_by" VARCHAR(140) NOT NULL,
+    "body" TEXT NOT NULL,
+    "direction" VARCHAR(140) NOT NULL,
+    "channel" VARCHAR(140),
+    "attachments" JSONB,
+    "event_type" VARCHAR(140),
+
+    CONSTRAINT fk_communication_parent_ticket
+        FOREIGN KEY (ticket) REFERENCES "Ticket" (name) ON DELETE CASCADE,
+    CONSTRAINT fk_communication_sender
+        FOREIGN KEY ("sender") REFERENCES auth.users (id)
+);
+
+
+CREATE OR REPLACE FUNCTION is_manager(user_id uuid)
+RETURNS BOOLEAN
+LANGUAGE SQL
+SECURITY DEFINER
+AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM "Role"
+        WHERE "Role".user_id = is_manager.user_id
+          AND "Role"."name" = 'System Manager'
+    );
+$$;
+GRANT EXECUTE ON FUNCTION is_manager(uuid) TO authenticated;
+
+ALTER TABLE "Team" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Agent_Membership" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Ticket" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Communication" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Role" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Priority" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "SLA" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "System Manager Bypass" ON "Ticket" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "Team" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "Agent_Membership" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "Communication" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "Role" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "Priority" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+CREATE POLICY "System Manager Bypass" ON "SLA" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
+
+CREATE POLICY "Agents can access and modify tickets of their teams" ON "Ticket" AS PERMISSIVE FOR ALL TO authenticated
+USING (
+    "assigned_agent" = auth.uid()
+    OR
+    "agent_group" IN (SELECT team FROM "Agent_Membership" WHERE user_id = auth.uid())
+)
+WITH CHECK (
+    "assigned_agent" = auth.uid()
+    OR
+    "agent_group" IN (SELECT team FROM "Agent_Membership" WHERE user_id = auth.uid())
+);
+
+CREATE POLICY "Customers can only read their own tickets" ON "Ticket" AS PERMISSIVE FOR SELECT TO authenticated
+USING ( "raised_by" = (SELECT email FROM auth.users WHERE id = auth.uid()) );
+CREATE POLICY "Customers can insert their own tickets" ON "Ticket" AS PERMISSIVE FOR INSERT TO authenticated
+WITH CHECK ( "raised_by" = (SELECT email FROM auth.users WHERE id = auth.uid()) );
+
+CREATE POLICY "Agents can only view their own teams" ON "Team" AS PERMISSIVE FOR SELECT TO authenticated
+USING ( "name" IN (SELECT team FROM "Agent_Membership" WHERE user_id = auth.uid()) );
+
+CREATE POLICY "Agents can view members of their teams" ON "Agent_Membership" AS PERMISSIVE FOR SELECT TO authenticated
+USING ( "team" IN (SELECT team FROM "Agent_Membership" WHERE user_id = auth.uid()) );
+
+CREATE POLICY "Agents can view communication on accessible tickets" ON "Communication" AS PERMISSIVE FOR SELECT TO authenticated
+USING ( "ticket" IN (
+    SELECT name FROM "Ticket"
+    WHERE "assigned_agent" = auth.uid()
+    OR "agent_group" IN (SELECT team FROM "Agent_Membership" WHERE user_id = auth.uid())
+));
+CREATE POLICY "Customers can view communication on their own tickets" ON "Communication" AS PERMISSIVE FOR SELECT TO authenticated
+USING ( "ticket" IN (
+    SELECT name
+    FROM "Ticket"
+    WHERE "raised_by" = (SELECT email FROM auth.users WHERE id = auth.uid())
+));
