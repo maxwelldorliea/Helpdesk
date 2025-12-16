@@ -12,7 +12,9 @@ declare module 'motia' {
   }
 
   interface Handlers {
-    
+    'Get Tickets': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Ticket By ID': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Pull Email': CronHandler<never>
   }
     
 }

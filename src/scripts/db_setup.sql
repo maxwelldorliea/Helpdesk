@@ -155,6 +155,17 @@ CREATE TABLE "Communication" (
         FOREIGN KEY ("sender") REFERENCES auth.users (id)
 );
 
+CREATE TABLE "Knowledge_Base" (
+    "id" SERIAL PRIMARY KEY,
+    "title" VARCHAR(255) NOT NULL,
+    "content" TEXT NOT NULL,
+    "category" VARCHAR(100),
+    "is_public" BOOLEAN DEFAULT FALSE,
+    "creation" TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    "modified" TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    "author" UUID REFERENCES auth.users(id)
+);
+
 
 CREATE OR REPLACE FUNCTION is_manager(user_id uuid)
 RETURNS BOOLEAN
@@ -180,6 +191,7 @@ ALTER TABLE "SLA" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Channel" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Customer_Handle" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Knowledge_Base" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "System Manager Bypass" ON "Ticket" AS PERMISSIVE FOR ALL TO authenticated USING ( is_manager(auth.uid()) );
 
@@ -251,3 +263,11 @@ USING ( EXISTS (SELECT 1 FROM "Role" WHERE user_id = auth.uid() AND name = 'Agen
 CREATE POLICY "Customers can view their own profile" ON "Customer"
 AS PERMISSIVE FOR SELECT TO authenticated
 USING ( "email" = (SELECT email FROM auth.users WHERE id = auth.uid()) );
+
+CREATE POLICY "Agents can manage KB" ON "Knowledge_Base"
+AS PERMISSIVE FOR ALL TO authenticated
+USING ( EXISTS (SELECT 1 FROM "Role" WHERE user_id = auth.uid() AND name = 'Agent') );
+
+CREATE POLICY "Anyone can read public KB" ON "Knowledge_Base"
+AS PERMISSIVE FOR SELECT TO authenticated, anon
+USING ( "is_public" = TRUE );
