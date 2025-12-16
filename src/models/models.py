@@ -171,6 +171,17 @@ class AgentMembership(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class KnowledgeBaseArticle(BaseModel):
+    name: str = Field(max_length=140)
+    title: str = Field(max_length=255)
+    content: str
+    category: str | None = None
+    is_public: bool = False
+    creation: datetime
+    modified: datetime
+
+    model_config = {"from_attributes": True}
+
 class Attachment(BaseModel):
     filename: str
     mime_type: str
