@@ -12,5 +12,22 @@
         "sourceHandlePosition": "right"
       }
     }
+  },
+  {
+    "id": "HelpDesk",
+    "config": {
+      "src/ticket/step/get_tickets_step.py": {
+        "x": 97,
+        "y": 28
+      },
+      "src/ticket/step/get_ticket_step.py": {
+        "x": 97,
+        "y": 437
+      },
+      "src/email/pull_emails_step.py": {
+        "x": -374,
+        "y": 181
+      }
+    }
   }
 ]

@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
-from ..store.ticket import Ticket
+from src.ticket.store.ticket import Ticket
 
 config = {
     "name": "Get Ticket By ID",
     "type": "api",
     "method": "GET",
+    "description": "Get Ticket Details and Communication By ID",
     "path": "/tickets/:id",
-    "emits": []
+    "emits": [],
+    "flows": ["HelpDesk"]
 }
 
 async def handler(req, ctx=None):

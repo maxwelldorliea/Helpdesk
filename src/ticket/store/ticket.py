@@ -20,5 +20,5 @@ class Ticket:
 
     def get_all(self) -> list[dict]:
         res = self.supabase.table('Ticket')\
-        .select('*', 'Communication(*)').execute()
+        .select('*').execute()
         return res.json()
