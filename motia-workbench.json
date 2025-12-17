@@ -16,17 +16,25 @@
   {
     "id": "HelpDesk",
     "config": {
+      "src/ticket/step/new_ticket_notification_step.py": {
+        "x": 350,
+        "y": 440
+      },
       "src/ticket/step/get_tickets_step.py": {
         "x": 97,
         "y": 28
       },
       "src/ticket/step/get_ticket_step.py": {
-        "x": 97,
-        "y": 437
+        "x": -575,
+        "y": 404
       },
-      "src/email/pull_emails_step.py": {
-        "x": -374,
-        "y": 181
+      "src/ticket/step/create_ticket_step.py": {
+        "x": -184,
+        "y": 254
+      },
+      "src/email/step/pull_emails_step.py": {
+        "x": -21,
+        "y": 558
       }
     }
   }

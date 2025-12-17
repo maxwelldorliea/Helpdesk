@@ -182,6 +182,17 @@ class KnowledgeBaseArticle(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class SystemSettings(BaseModel):
+    name: str = "GLOBAL"
+    ticket_prefix: str = Field("TIK", max_length=10)
+    current_count: int = 1
+    customer_prefix: str = Field("CUST", max_length=10)
+    current_customer_count: int = 1
+    admin_agent_group: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class Attachment(BaseModel):
     filename: str
     mime_type: str

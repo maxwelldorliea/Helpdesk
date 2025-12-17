@@ -21,3 +21,13 @@ INSERT INTO "SLA" ("name", "priority_name", "description", "first_response_time"
 ('Premium-High', 'High', 'Enhanced response time for Premium customers.', '2 hours', '8 hours', 'Premium');
 
 INSERT INTO "Role" ("user_id", "name") VALUES ('the_system_manager_user_id_from_supabase', 'System Manager');
+
+INSERT INTO "System_Settings" ("name", "ticket_prefix", "current_count", "customer_prefix", "current_customer_count")
+VALUES ('GLOBAL', 'TIK', 1, 'CUST', 1)
+ON CONFLICT ("name") DO NOTHING;
+
+INSERT INTO "Channel" ("name", "description", "icon_slug", "is_active")
+VALUES
+    ('Email', 'Tickets received via support email addresses', 'mail', TRUE),
+    ('WhatsApp', 'Incoming messages from official WhatsApp Business API', 'whatsapp', TRUE),
+ON CONFLICT ("name") DO NOTHING;

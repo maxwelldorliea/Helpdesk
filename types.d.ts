@@ -12,8 +12,13 @@ declare module 'motia' {
   }
 
   interface Handlers {
+    'Update Ticket': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Send New Ticket Notification': EventHandler<never, never>
     'Get Tickets': ApiRouteHandler<Record<string, unknown>, unknown, never>
     'Get Ticket By ID': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Active Channels': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create a New Ticket': ApiRouteHandler<{ subject: string; description: string; raised_by: string | string; channel?: string; customer?: string | unknown; priority?: string | unknown; agent_group?: string | unknown }, unknown, { topic: 'ticket.created'; data: never }>
+    'Add Ticket Reply': ApiRouteHandler<Record<string, unknown>, unknown, never>
     'Pull Email': CronHandler<never>
   }
     

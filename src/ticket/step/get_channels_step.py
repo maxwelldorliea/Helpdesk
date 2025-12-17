@@ -4,20 +4,19 @@ from src.ticket.store.ticket import Ticket
 from src.middleware.auth import auth
 
 config = {
-    "name": "Get Ticket By ID",
+    "name": "Get Active Channels",
     "type": "api",
     "method": "GET",
-    "description": "Get Ticket Details and Communication By ID",
-    "path": "/tickets/:id",
+    "description": "Fetch all active ticket channels",
+    "path": "/channels",
     "middleware": [auth],
     "emits": [],
     "flows": ["HelpDesk"]
 }
 
-async def handler(req, ctx=None):
-    id = req.get("pathParams", {}).get("id")
+async def handler(req, ctx):
     supabase = req['supabase']
     token = req['token']
     ticket = Ticket(supabase, token)
-    return {"status": 200, "body": ticket.get_by_id(id)}
-
+    channels = ticket.get_channels()
+    return {"status": 200, "body": channels}
