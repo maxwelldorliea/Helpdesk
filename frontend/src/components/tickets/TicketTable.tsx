@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge'
-import { SLATimer } from './SLATimer'
 import { ChannelIcon } from './ChannelIcon'
 import type { Ticket, TicketStatus, Priority } from '@/lib/types'
-import { cn } from '@/lib/utils'
-import { ArrowUpDown, Search } from 'lucide-react'
+import { cn, safeFormat, calculateSLAStatus, calculateSLAMetrics } from '@/lib/utils'
+import {
+    ArrowUpDown,
+    Timer,
+    Search
+} from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import {
     Select,
@@ -80,6 +83,7 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
         const styles: Record<TicketStatus, string> = {
             Open: 'bg-blue-100 text-blue-700 border-blue-200',
             Replied: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            'On Hold': 'bg-orange-100 text-orange-700 border-orange-200',
             Resolved: 'bg-green-100 text-green-700 border-green-200',
             Closed: 'bg-gray-100 text-gray-700 border-gray-200',
         }
@@ -119,6 +123,7 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                             <SelectItem value="all">All Status</SelectItem>
                             <SelectItem value="Open">Open</SelectItem>
                             <SelectItem value="Replied">Replied</SelectItem>
+                            <SelectItem value="On Hold">On Hold</SelectItem>
                             <SelectItem value="Resolved">Resolved</SelectItem>
                             <SelectItem value="Closed">Closed</SelectItem>
                         </SelectContent>
@@ -184,10 +189,16 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                                     </button>
                                 </th>
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                    SLA
+                                    SLA Status
                                 </th>
                                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                    Assignee
+                                    Agent
+                                </th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                    Response By
+                                </th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                    Resolution By
                                 </th>
                             </tr>
                         </thead>
@@ -245,17 +256,68 @@ export function TicketTable({ tickets, onTicketClick }: TicketTableProps) {
                                         </Badge>
                                     </td>
                                     <td className="p-4 align-middle">
-                                        <div className="flex flex-col gap-1">
-                                            {ticket.SLA && (
-                                                <span className="text-xs font-medium text-muted-foreground">
-                                                    {ticket.SLA.name}
+                                        {ticket.agreement_status ? (
+                                            <Badge variant="outline" className={
+                                                ticket.agreement_status === 'Failed' ? 'bg-red-100 text-red-800' :
+                                                    (ticket.agreement_status === 'Fulfilled' || ticket.agreement_status === 'Passed') ? 'bg-green-100 text-green-800' :
+                                                        'bg-blue-100 text-blue-800'
+                                            }>
+                                                {ticket.agreement_status}
+                                            </Badge>
+                                        ) : '-'}
+                                    </td>
+                                    <td className="p-4 align-middle">
+                                        <span className="text-sm">{ticket.assigneeName || ticket.agent || '-'}</span>
+                                    </td>
+                                    <td className="p-4 align-middle">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm">{ticket.response_by ? safeFormat(ticket.response_by, 'MMM d, p') : '-'}</span>
+                                            {ticket.response_by && !['Failed', 'Passed', 'Fulfilled'].includes(ticket.agreement_status || '') && !ticket.first_responded_on && (
+                                                <span className={cn(
+                                                    "text-xs flex items-center gap-1",
+                                                    calculateSLAStatus(ticket.response_by).urgency === 'overdue' ? "text-destructive font-medium" :
+                                                        calculateSLAStatus(ticket.response_by).urgency === 'high' ? "text-orange-500" : "text-muted-foreground"
+                                                )}>
+                                                    <Timer className="h-3 w-3" />
+                                                    {calculateSLAStatus(ticket.response_by).timeRemaining}
                                                 </span>
                                             )}
-                                            {ticket.response_by && <SLATimer dueDate={ticket.response_by} />}
+                                            {ticket.first_responded_on && (
+                                                <span className={cn(
+                                                    "text-xs flex items-center gap-1",
+                                                    calculateSLAMetrics(ticket.creation, ticket.first_responded_on, ticket.response_by, 'Response')?.startsWith('Overdue')
+                                                        ? "text-destructive font-medium"
+                                                        : "text-green-600 font-medium"
+                                                )}>
+                                                    {calculateSLAMetrics(ticket.creation, ticket.first_responded_on, ticket.response_by, 'Response')}
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="p-4 align-middle">
-                                        <span className="text-sm">{ticket.assigneeName || ticket.assigned_agent || '-'}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm">{ticket.resolution_by ? safeFormat(ticket.resolution_by, 'MMM d, p') : '-'}</span>
+                                            {ticket.resolution_by && !['Failed', 'Passed', 'Fulfilled'].includes(ticket.agreement_status || '') && !ticket.resolution_date && (
+                                                <span className={cn(
+                                                    "text-xs flex items-center gap-1",
+                                                    calculateSLAStatus(ticket.resolution_by).urgency === 'overdue' ? "text-destructive font-medium" :
+                                                        calculateSLAStatus(ticket.resolution_by).urgency === 'high' ? "text-orange-500" : "text-muted-foreground"
+                                                )}>
+                                                    <Timer className="h-3 w-3" />
+                                                    {calculateSLAStatus(ticket.resolution_by).timeRemaining}
+                                                </span>
+                                            )}
+                                            {ticket.resolution_date && (
+                                                <span className={cn(
+                                                    "text-xs flex items-center gap-1",
+                                                    calculateSLAMetrics(ticket.creation, ticket.resolution_date, ticket.resolution_by, 'Resolution')?.startsWith('Overdue')
+                                                        ? "text-destructive font-medium"
+                                                        : "text-green-600 font-medium"
+                                                )}>
+                                                    {calculateSLAMetrics(ticket.creation, ticket.resolution_date, ticket.resolution_by, 'Resolution')}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

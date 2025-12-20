@@ -63,6 +63,7 @@ export function CreateTicketDialog({
                 channel: formData.channel,
                 status: 'Open',
                 name: '',
+                raised_by: formData.customer,
                 creation: new Date().toISOString(),
                 modified: new Date().toISOString(),
                 resolved_by_bot: false,

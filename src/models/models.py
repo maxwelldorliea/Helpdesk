@@ -9,9 +9,19 @@ import uuid
 PgInterval = timedelta
 ContactInfo = EmailStr | str
 
+class TicketAnalysis(BaseModel):
+    team: str
+    priority: str
+    reason: str
+    suggested_resolution: str | None = None
+    can_resolve: bool = False
+    needs_more_info: bool = False
+    clarifying_question: str | None = None
+
 class TicketStatus(str, Enum):
     OPEN = 'Open'
     REPLIED = 'Replied'
+    ON_HOLD = 'On Hold'
     RESOLVED = 'Resolved'
     CLOSED = 'Closed'
 
@@ -33,6 +43,8 @@ class Channel(BaseModel):
     description: str | None = None
     icon_slug: str | None = Field(None, max_length=50)
     is_active: bool = True
+    creation: datetime
+    modified: datetime
 
     model_config = {"from_attributes": True}
 
@@ -51,7 +63,7 @@ class CustomerHandle(BaseModel):
     id: int | None = None
     customer: str = Field(max_length=140)
     channel: str = Field(max_length=50)
-    handle: str = Field(max_length=140)
+    handle: str = Field(max_length=255)
     creation: datetime
     modified: datetime
 
@@ -66,27 +78,33 @@ class TicketBase(BaseModel):
 
 class TicketCreate(TicketBase):
     priority: str | None = None
-    agent_group: str | None = None
+    team: str | None = None
 
 
 class Ticket(TicketBase):
     name: str = Field(max_length=140)
     owner: str = Field(max_length=140)
-    external_thread_id: str | None = Field(None, max_length=255)
+    external_thread_id: str | None = Field(None, max_length=140)
     creation: datetime
     modified: datetime
     status: TicketStatus = TicketStatus.OPEN
-    priority: str | None
-    agent_group: str | None
-    assigned_agent: uuid.UUID | None
-    resolution_date: datetime | None
+    priority: str | None = None
+    team: str | None = None
+    agent: uuid.UUID | None = None
+    resolution_date: datetime | None = None
     resolved_by_bot: bool = False
-    resolved_by_agent: uuid.UUID | None
-    sla_name: str | None
+    resolved_by: uuid.UUID | None = None
+    first_responded_on: datetime | None = None
+    bot_first_responded_on: datetime | None = None
+    sla: str | None = None
     agreement_status: AgreementStatus | None = None
-    response_by: datetime | None
-    resolution_by: datetime | None
-    total_hold_time: PgInterval | None
+    response_by: datetime | None = None
+    resolution_by: datetime | None = None
+    total_hold_time: PgInterval | None = None
+    first_response_time: PgInterval | None = None
+    is_merged: bool = False
+    merged_with: str | None = None
+    original_team: str | None = None
     escalation_count: int = 0
 
     model_config = {
@@ -102,24 +120,28 @@ class CommunicationBase(BaseModel):
     body: str
     direction: CommunicationDirection
     channel: str | None
-    attachments: dict | None = None
+    message_id: str | None = None
+    raw_headers: dict | None = None
+    attachments: dict | list | None = None
+    event_type: str | None = None
 
 class CommunicationCreate(CommunicationBase):
     sender: uuid.UUID | None
     raised_by: ContactInfo
 
 class Communication(CommunicationBase):
-    name: str = Field(max_length=140)
+    id: int | None = None
+    sender: uuid.UUID | None = None
+    raised_by: ContactInfo
     creation: datetime
-    modified: datetime
-    event_type: str | None
+    event_type: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 class SLA(BaseModel):
     name: str = Field(max_length=140)
-    priority_name: str = Field(max_length=140)
+    priority: str = Field(max_length=140)
     description: str | None
     first_response_time: PgInterval | None
     resolution_time: PgInterval | None
@@ -145,7 +167,7 @@ class Team(BaseModel):
     name: str = Field(max_length=140)
     description: str | None
     escalation_team: str | None = Field(None, max_length=140)
-    last_assigned_agent: uuid.UUID | None
+    last_agent: uuid.UUID | None
     creation: datetime
     modified: datetime
 
@@ -153,7 +175,7 @@ class Team(BaseModel):
 
 
 class Role(BaseModel):
-    user_id: uuid.UUID
+    user: uuid.UUID
     name: str = Field(max_length=50)
     creation: datetime
     modified: datetime
@@ -163,7 +185,7 @@ class Role(BaseModel):
 
 class AgentMembership(BaseModel):
     id: int
-    user_id: uuid.UUID
+    user: uuid.UUID
     team: str = Field(max_length=140)
     creation: datetime
     modified: datetime
@@ -172,11 +194,12 @@ class AgentMembership(BaseModel):
 
 
 class KnowledgeBaseArticle(BaseModel):
-    name: str = Field(max_length=140)
+    id: int | None = None
     title: str = Field(max_length=255)
     content: str
     category: str | None = None
     is_public: bool = False
+    author: uuid.UUID | None = None
     creation: datetime
     modified: datetime
 
@@ -188,7 +211,9 @@ class SystemSettings(BaseModel):
     current_count: int = 1
     customer_prefix: str = Field("CUST", max_length=10)
     current_customer_count: int = 1
-    admin_agent_group: str | None = None
+    current_customer_count: int = 1
+    admin_team: str | None = None
+    last_reset_date: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -203,6 +228,7 @@ class InboundEmail(BaseModel):
     unique_id: str
     subject: str
     body_text: str
+    full_body_text: str | None = None
     sender_email: EmailStr
     sender_name: str | None = None
     received_at: datetime | None
@@ -211,3 +237,9 @@ class InboundEmail(BaseModel):
     references: list[str] = Field(default_factory=list)
     raw_headers: dict[str, str] = Field(default_factory=dict)
     attachments: list[Attachment] = Field(default_factory=list)
+
+class ReplyRequest(BaseModel):
+    channel: str
+    raised_by: str
+    body: str
+    attachments: dict | list | None = None

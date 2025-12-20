@@ -1,7 +1,7 @@
-export type TicketStatus = 'Open' | 'Replied' | 'Resolved' | 'Closed'
+export type TicketStatus = 'Open' | 'Replied' | 'On Hold' | 'Resolved' | 'Closed'
 export type Priority = 'Low' | 'Medium' | 'High' | 'Critical'
 export type Channel = 'Email' | 'WhatsApp'
-export type AgreementStatus = 'First Response Due' | 'Resolution Due' | 'Failed' | 'Fulfilled' | 'Paused'
+export type AgreementStatus = 'First Response Due' | 'Resolution Due' | 'Failed' | 'Fulfilled' | 'Paused' | 'On Track' | 'Passed'
 export type CommunicationDirection = 'Inbound' | 'Outbound' | 'System' | 'Escalation'
 
 export interface ChannelConfig {
@@ -20,8 +20,8 @@ export interface Ticket {
     status: TicketStatus
     priority: string | null
     customer: string | null
-    agent_group: string | null
-    assigned_agent: string | null
+    team: string | null
+    agent: string | null
     channel: string
     external_thread_id: string | null
 
@@ -30,16 +30,20 @@ export interface Ticket {
     resolution_date: string | null
     response_by: string | null
     resolution_by: string | null
+    first_responded_on: string | null
     total_hold_time: string | null
 
     resolved_by_bot: boolean
-    resolved_by_agent: string | null
+    resolved_by: string | null
+    bot_first_responded_on: string | null
 
-    sla_name: string | null
+    sla: string | null
     agreement_status: AgreementStatus | null
     escalation_count: number
 
     customerName?: string
+    customerEmail?: string
+    customerPhone?: string
     assigneeName?: string
     teamName?: string
     Communication?: Communication[]
@@ -61,14 +65,14 @@ export interface Team {
     name: string
     description: string | null
     escalation_team: string | null
-    last_assigned_agent: string | null
+    last_agent: string | null
     creation: string
     modified: string
 }
 
 export interface SLA {
     name: string
-    priority_name: string
+    priority: string
     description: string | null
     first_response_time: string | null
     resolution_time: string | null
@@ -97,6 +101,49 @@ export interface Communication {
     raised_by: string
     name: string
     event_type: string | null
+    creation: string
+    modified: string
+}
+
+export interface KnowledgeBaseArticle {
+    id: number
+    title: string
+    content: string
+    category: string | null
+    is_public: boolean
+    author: string | null
+    creation: string
+    modified: string
+}
+
+export interface SystemSettings {
+    name: string
+    ticket_prefix: string
+    current_count: number
+    customer_prefix: string
+    current_customer_count: number
+    admin_team: string | null
+    last_reset_date: string
+}
+
+export interface AgentMembership {
+    id: number
+    user: string
+    team: string
+    creation: string
+    modified: string
+    userInfo?: {
+        id: string
+        email: string
+        full_name?: string
+    }
+}
+
+export interface CustomerHandle {
+    id: number
+    customer: string
+    channel: string
+    handle: string
     creation: string
     modified: string
 }

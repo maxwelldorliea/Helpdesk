@@ -16,9 +16,13 @@
   {
     "id": "HelpDesk",
     "config": {
+      "src/ticket/step/update_ticket_step.py": {
+        "x": 77,
+        "y": 0
+      },
       "src/ticket/step/new_ticket_notification_step.py": {
-        "x": 350,
-        "y": 440
+        "x": 72,
+        "y": 787
       },
       "src/ticket/step/get_tickets_step.py": {
         "x": 97,
@@ -28,13 +32,169 @@
         "x": -575,
         "y": 404
       },
+      "src/ticket/step/get_channels_step.py": {
+        "x": 47,
+        "y": 609
+      },
+      "src/ticket/step/email_to_ticket_step.py": {
+        "x": 0,
+        "y": 812
+      },
       "src/ticket/step/create_ticket_step.py": {
         "x": -184,
         "y": 254
       },
+      "src/ticket/step/add_reply_step.py": {
+        "x": -247,
+        "y": 1863
+      },
+      "src/management/step/update_team_step.py": {
+        "x": 42,
+        "y": 1373
+      },
+      "src/management/step/update_sla_step.py": {
+        "x": 37,
+        "y": 1576
+      },
+      "src/management/step/update_settings_step.py": {
+        "x": 46,
+        "y": 1779
+      },
+      "src/management/step/update_profile_step.py": {
+        "x": 76,
+        "y": 1982
+      },
+      "src/management/step/update_priority_step.py": {
+        "x": 21,
+        "y": 1982
+      },
+      "src/management/step/update_customer_step.py": {
+        "x": 25,
+        "y": 2185
+      },
+      "src/management/step/update_article_step.py": {
+        "x": 10,
+        "y": 2388
+      },
+      "src/management/step/remove_team_member_step.py": {
+        "x": 0,
+        "y": 2591
+      },
+      "src/management/step/remove_customer_handle_step.py": {
+        "x": 0,
+        "y": 2591
+      },
+      "src/management/step/invite_user_step.py": {
+        "x": 16,
+        "y": 3037
+      },
+      "src/management/step/get_users_step.py": {
+        "x": 0,
+        "y": 2814
+      },
+      "src/management/step/get_teams_step.py": {
+        "x": 58,
+        "y": 3037
+      },
+      "src/management/step/get_team_members_step.py": {
+        "x": 0,
+        "y": 3240
+      },
+      "src/management/step/get_stats_step.py": {
+        "x": 0,
+        "y": 4092
+      },
+      "src/management/step/get_slas_step.py": {
+        "x": 63,
+        "y": 3463
+      },
+      "src/management/step/get_settings_step.py": {
+        "x": 46,
+        "y": 3666
+      },
+      "src/management/step/get_profile_step.py": {
+        "x": 88,
+        "y": 4721
+      },
+      "src/management/step/get_priorities_step.py": {
+        "x": 37,
+        "y": 3869
+      },
+      "src/management/step/get_customers_step.py": {
+        "x": 42,
+        "y": 4072
+      },
+      "src/management/step/get_customer_handles_step.py": {
+        "x": 0,
+        "y": 4275
+      },
+      "src/management/step/get_articles_step.py": {
+        "x": 46,
+        "y": 4498
+      },
+      "src/management/step/get_agents_step.py": {
+        "x": 43,
+        "y": 4701
+      },
+      "src/management/step/delete_team_step.py": {
+        "x": 29,
+        "y": 4904
+      },
+      "src/management/step/delete_sla_step.py": {
+        "x": 25,
+        "y": 5107
+      },
+      "src/management/step/delete_priority_step.py": {
+        "x": 8,
+        "y": 5310
+      },
+      "src/management/step/delete_customer_step.py": {
+        "x": 12,
+        "y": 5513
+      },
+      "src/management/step/delete_article_step.py": {
+        "x": 13,
+        "y": 5716
+      },
+      "src/management/step/create_team_step.py": {
+        "x": 54,
+        "y": 5919
+      },
+      "src/management/step/create_sla_step.py": {
+        "x": 58,
+        "y": 6122
+      },
+      "src/management/step/create_priority_step.py": {
+        "x": 33,
+        "y": 6325
+      },
+      "src/management/step/create_customer_step.py": {
+        "x": 37,
+        "y": 6528
+      },
+      "src/management/step/create_article_step.py": {
+        "x": 28,
+        "y": 6731
+      },
+      "src/management/step/add_team_member_step.py": {
+        "x": 0,
+        "y": 7360
+      },
+      "src/management/step/add_customer_handle_step.py": {
+        "x": 0,
+        "y": 6934
+      },
       "src/email/step/pull_emails_step.py": {
-        "x": -21,
-        "y": 558
+        "x": -1279,
+        "y": 597
+      },
+      "src/communication/step/dispatch_communication_step.py": {
+        "x": 350,
+        "y": 1194
+      },
+      "src/ai/step/ticket_orchestrator_step.py": {
+        "x": 350,
+        "y": 1093
       }
     }
   }

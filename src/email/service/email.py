@@ -6,6 +6,7 @@ import smtplib
 import uuid
 import base64
 import email
+import re
 import email.policy
 from email.message import EmailMessage
 from email.utils import parseaddr, formataddr, make_msgid, parsedate_to_datetime
@@ -67,6 +68,28 @@ class EmailService:
 
         return inbound_emails
 
+    def _strip_quoted_text(self, text: str) -> str:
+        if not text:
+            return ""
+        patterns = [
+            r'(?m)^On\s+.*\s+wrote:\s*$',
+            r'(?m)^-----Original Message-----',
+            r'(?m)^From:.*$',
+            r'(?m)^________________________________'
+        ]
+        cleaned_text = text
+        for pattern in patterns:
+            parts = re.split(pattern, cleaned_text, flags=re.IGNORECASE | re.MULTILINE)
+            if parts:
+                cleaned_text = parts[0]
+        lines = cleaned_text.splitlines()
+        final_lines = []
+        for line in lines:
+            if line.strip().startswith(">"):
+                break
+            final_lines.append(line)
+        return "\n".join(final_lines).strip()
+
     def _parse_raw_email(self, raw_email: bytes, imap_uid: str) -> InboundEmail:
         msg = email.message_from_bytes(raw_email, policy=email.policy.default)
         sender_name, sender_email = parseaddr(msg.get('From', ''))
@@ -108,10 +131,14 @@ class EmailService:
             except Exception:
                 pass
 
+        full_body = body_text.strip()
+        cleaned_body = self._strip_quoted_text(full_body)
+
         return InboundEmail(
             unique_id=imap_uid,
             subject=msg.get('Subject', 'No Subject'),
-            body_text=body_text.strip(),
+            body_text=cleaned_body,
+            full_body_text=full_body,
             sender_email=sender_email,
             sender_name=sender_name if sender_name else None,
             received_at=received_at,
@@ -128,7 +155,8 @@ class EmailService:
         subject: str,
         body: str,
         reply_to_message_id: str | None = None,
-        references_chain: list[str] | None = None
+        references_chain: list[str] | None = None,
+        attachments: dict[str, str] | None = None
     ) -> str | None:
         msg = EmailMessage()
         msg['From'] = formataddr((self.EMAIL_USER.split('@')[0], self.EMAIL_USER))
@@ -140,6 +168,24 @@ class EmailService:
             msg['In-Reply-To'] = reply_to_message_id
         if references_chain:
             msg['References'] = ' '.join(references_chain)
+
+        if attachments:
+            for filename, data_url in attachments.items():
+                try:
+                    if ',' in data_url:
+                        header, encoded = data_url.split(',', 1)
+                        mime_type = header.split(':')[1].split(';')[0]
+                        maintype, subtype = mime_type.split('/', 1)
+                        file_data = base64.b64decode(encoded)
+
+                        msg.add_attachment(
+                            file_data,
+                            maintype=maintype,
+                            subtype=subtype,
+                            filename=filename
+                        )
+                except Exception as e:
+                    print(f"Error attaching file {filename}: {e}")
 
         new_message_id = make_msgid(idstring=str(uuid.uuid4()))
         msg['Message-ID'] = new_message_id

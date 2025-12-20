@@ -9,6 +9,7 @@ import {
     Menu,
     X,
     LogOut,
+    Ticket,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -19,6 +20,7 @@ interface NavItem {
     title: string
     href: string
     icon: React.ComponentType<{ className?: string }>
+    adminOnly?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -26,6 +28,12 @@ const navItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutDashboard,
+        adminOnly: true,
+    },
+    {
+        title: 'Tickets',
+        href: '/tickets',
+        icon: Ticket,
     },
     {
         title: 'Teams',
@@ -57,8 +65,15 @@ const navItems: NavItem[] = [
 export function Sidebar() {
     const location = useLocation()
     const navigate = useNavigate()
-    const { user, signOut } = useAuth()
+    const { user, isAdminAgent, isSystemManager, signOut } = useAuth()
     const [isOpen, setIsOpen] = useState(false)
+
+    const filteredNavItems = navItems.filter(item => {
+        if (item.adminOnly || item.href === '/settings') {
+            return isSystemManager || isAdminAgent
+        }
+        return true
+    })
 
     const handleSignOut = async () => {
         await signOut()
@@ -100,7 +115,7 @@ export function Sidebar() {
                     </div>
 
                     <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-                        {navItems.map((item) => {
+                        {filteredNavItems.map((item) => {
                             const Icon = item.icon
                             const isActive = location.pathname === item.href
 
@@ -124,7 +139,11 @@ export function Sidebar() {
                     </nav>
 
                     <div className="border-t p-4 space-y-4">
-                        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+                        <Link
+                            to="/profile"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-colors cursor-pointer"
+                        >
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
                                 <UserCircle className="h-5 w-5" />
                             </div>
@@ -132,7 +151,7 @@ export function Sidebar() {
                                 <p className="truncate text-sm font-medium">{user?.email || 'User'}</p>
                                 <p className="truncate text-xs text-muted-foreground">Agent</p>
                             </div>
-                        </div>
+                        </Link>
                         <Button
                             variant="outline"
                             className="w-full justify-start gap-2"

@@ -14,6 +14,10 @@ config = {
 
 async def handler(ctx):
     ctx.logger.info('Email Pulling has started - scanning for available emails')
-    emails: list[InboundEmail] = EmailService().pull()
+    emails: list[InboundEmail] = EmailService().pull(mark_as_seen=True)
     for e in emails:
-        ctx.logger.info('Email', {'data': e.json()})
+        ctx.logger.info(f'Email received: {e.subject}')
+        await ctx.emit({
+            "topic": "email.received",
+            "data": e.model_dump(mode='json')
+        })

@@ -8,18 +8,56 @@ import { EventHandler, ApiRouteHandler, ApiResponse, MotiaStream, CronHandler } 
 
 declare module 'motia' {
   interface FlowContextStateStreams {
-    
+    'tickets': MotiaStream<{ name: string; subject: string; status: string; priority?: unknown; team?: unknown; agent?: unknown; customer?: unknown; creation: string; modified: string }>
+    'ticket_events': MotiaStream<{ ticket_id: string; event: string; message: string; timestamp: string }>
+    'communications': MotiaStream<{ id: string; ticket: string; body: string; direction: string; creation: string; raised_by: string; channel?: unknown; attachments?: unknown }>
   }
 
   interface Handlers {
-    'Update Ticket': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Reset Ticket Current Count': CronHandler<never>
     'Send New Ticket Notification': EventHandler<never, never>
     'Get Tickets': ApiRouteHandler<Record<string, unknown>, unknown, never>
     'Get Ticket By ID': ApiRouteHandler<Record<string, unknown>, unknown, never>
     'Get Active Channels': ApiRouteHandler<Record<string, unknown>, unknown, never>
-    'Create a New Ticket': ApiRouteHandler<{ subject: string; description: string; raised_by: string | string; channel?: string; customer?: string | unknown; priority?: string | unknown; agent_group?: string | unknown }, unknown, { topic: 'ticket.created'; data: never }>
-    'Add Ticket Reply': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Email to Ticket': EventHandler<never, { topic: 'ticket.created'; data: never } | { topic: 'ticket.replied'; data: never }>
+    'Create a New Ticket': ApiRouteHandler<{ subject: string; description: string; raised_by: string | string; channel?: string; customer?: string | unknown; priority?: string | unknown; team?: string | unknown }, unknown, { topic: 'ticket.created'; data: never }>
+    'Add Ticket Reply': ApiRouteHandler<Record<string, unknown>, unknown, { topic: 'ticket.replied'; data: never }>
+    'Update Team': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update SLA': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update Settings': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update Profile': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update Priority': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update Customer': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Update Article': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Remove Team Member': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Remove Customer Handle': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Invite User': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get All Users': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Teams': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Team Members': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Dashboard Stats': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get SLAs': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Settings': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Profile': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Priorities': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Customers': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Customer Handles': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Articles': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Get Agents': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Delete Team': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Delete SLA': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Delete Priority': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Delete Customer': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Delete Article': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create Team': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create SLA': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create Priority': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create Customer': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Create Article': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Add Team Member': ApiRouteHandler<Record<string, unknown>, unknown, never>
+    'Add Customer Handle': ApiRouteHandler<Record<string, unknown>, unknown, never>
     'Pull Email': CronHandler<never>
+    'Communication Dispatcher': EventHandler<never, never>
   }
     
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import traceback
 from supabase import create_client, Client
 
 
@@ -20,9 +21,10 @@ async def auth(req, ctx, next_fn):
         req['supabase'] = supabase
         req['token'] = token
     except Exception as e:
-        ctx.logger.error('An exception occurred during auth', str(e))
+        error_msg = f"{str(e)}\n{traceback.format_exc()}"
+        ctx.logger.error('An exception occurred during auth', error_msg)
         return {
             'status': 401,
-            'body': { 'error': 'Unauthorized' }
+            'body': { 'error': 'Unauthorized', 'details': str(e) }
         }
     return await next_fn()

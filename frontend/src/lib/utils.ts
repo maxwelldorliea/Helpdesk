@@ -58,8 +58,12 @@ export function calculateSLAStatus(dueDate: Date | string): {
     const diffInHours = diffInMs / (1000 * 60 * 60)
 
     if (diffInMs < 0) {
+        const overdueMs = Math.abs(diffInMs)
+        const overdueHours = Math.floor(overdueMs / (1000 * 60 * 60))
+        const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60))
+
         return {
-            timeRemaining: 'Overdue',
+            timeRemaining: overdueHours > 24 ? `${Math.floor(overdueHours / 24)}d ${overdueHours % 24}h overdue` : `${overdueHours}h ${overdueMinutes}m overdue`,
             urgency: 'overdue',
             percentage: 0,
         }
@@ -77,4 +81,42 @@ export function calculateSLAStatus(dueDate: Date | string): {
         urgency,
         percentage: Math.min(100, Math.max(0, (diffInHours / 48) * 100)),
     }
+}
+
+export function calculateSLAMetrics(
+    creation: string,
+    actionDate: string | null,
+    deadlineDate: string | null,
+    type: 'Response' | 'Resolution'
+): string | null {
+    if (!actionDate) return null
+
+    const action = new Date(actionDate)
+    const created = new Date(creation)
+    const verb = type === 'Response' ? 'Responded' : 'Resolved'
+
+    if (deadlineDate) {
+        const deadline = new Date(deadlineDate)
+        if (action > deadline) {
+            const diffInMs = action.getTime() - deadline.getTime()
+            const hours = Math.floor(diffInMs / (1000 * 60 * 60))
+            const minutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60))
+
+            const timeStr = hours > 24
+                ? `${Math.floor(hours / 24)}d ${hours % 24}h`
+                : `${hours}h ${minutes}m`
+
+            return `Overdue by ${timeStr}`
+        }
+    }
+
+    const diffInMs = action.getTime() - created.getTime()
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const minutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60))
+
+    const timeStr = hours > 24
+        ? `${Math.floor(hours / 24)}d ${hours % 24}h`
+        : `${hours}h ${minutes}m`
+
+    return `${verb} within ${timeStr}`
 }
