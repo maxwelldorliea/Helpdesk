@@ -71,7 +71,7 @@ Check [ticket_orchestrator_step.py](./src/ai/step/ticket_orchestrator_step.py):
     | `SMTP_SERVER` | SMTP server address (e.g., `smtp.gmail.com`). |
     | `VITE_API_BASE_URL` | Backend API URL (`http://localhost:3000`). |
 
-### 2. Frontend Setup
+### 4. Frontend Setup
 The frontend is a React + TypeScript application located in the `frontend/` directory.
 
 1.  **Navigate to frontend**:
@@ -90,7 +90,7 @@ The frontend is a React + TypeScript application located in the `frontend/` dire
     ```
     The **Frontend** will be available at `http://localhost:5173`
 
-### 4. Backend & Motia
+### 5. Backend & Motia
 From the root directory:
 ```bash
 # Start Motia runtime and Workbench
