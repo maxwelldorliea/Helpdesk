@@ -7,7 +7,7 @@ A unified system built with the [Motia](https://motia.dev) framework. This proje
 ## 🏛 Architecture
 
 The project follows a modular, event-driven architecture. You can find the visual overview in the root directory:
-- [architecture.svg](./architecture.svg)
+- ![Architecture Diagram](architecture.svg)
 
 ## 🚀 How I used Motia
 
