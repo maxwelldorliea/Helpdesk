@@ -90,9 +90,7 @@ The frontend is a React + TypeScript application located in the `frontend/` dire
     ```
     The **Frontend** will be available at `http://localhost:5173`
 
-## 🛠 Development Commands
-
-### 1. Backend & Motia
+### 4. Backend & Motia
 From the root directory:
 ```bash
 # Start Motia runtime and Workbench
